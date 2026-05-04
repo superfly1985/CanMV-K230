@@ -1,0 +1,10 @@
+{
+    "speaker_enable": true,
+    "sound_policy": "speaker",
+    "buzzer_enable": false,
+    "password_hash": "",
+    "password_salt": "",
+    "model_name": "bset_no_taping_v2.kmodel",
+    "confidence_threshold": 0.4,
+    "alarm_trigger_hold_ms": 0
+}

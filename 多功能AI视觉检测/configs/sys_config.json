@@ -1,0 +1,13 @@
+{
+    "sensor": {
+        "ch1_width": 640,
+        "ch1_height": 480
+    },
+    "display": {
+        "wallpaper": "",
+        "brightness": 69
+    },
+    "sound": {
+        "volume": 59
+    }
+}

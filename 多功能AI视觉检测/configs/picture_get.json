@@ -1,0 +1,5 @@
+{
+    "trigger_mode": "both",
+    "save_quality": 85,
+    "min_interval_ms": 500
+}
