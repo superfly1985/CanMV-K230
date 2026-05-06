@@ -1,10 +1,1 @@
-{
-    "speaker_enable": true,
-    "sound_policy": "speaker",
-    "buzzer_enable": false,
-    "password_hash": "",
-    "password_salt": "",
-    "model_name": "bset_no_taping_v2.kmodel",
-    "confidence_threshold": 0.4,
-    "alarm_trigger_hold_ms": 0
-}
+{"alarm_trigger_hold_ms": 80, "confidence_threshold": 0.7, "model_dir": "/sdcard/kmodel/taping_checker/", "sound_mode": "buzzer", "model_name": "taping_checker_v13.kmodel", "password": "1111", "bbox_colors": [[255, 0, 255], [0, 255, 0], [0, 127, 255], [0, 0, 255], [255, 255, 0]]}

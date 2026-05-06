@@ -1,6 +1,6 @@
 import lvgl as lv
 from base_app import BaseApp
-from apps.io_tester.core import GPIOController, OUTPUT_PINS, INPUT_PINS
+from apps.io_tester.core import GPIOController, SpeakerController, OUTPUT_PINS, INPUT_PINS, _log
 import time, gc
 
 class App(BaseApp):
@@ -21,6 +21,7 @@ class App(BaseApp):
         self.pl = app_manager.pl
         self.is_running = False
         self.gpio = None
+        self.speaker = None
         self.out_btns = {}
         self.in_labels = {}
         self.content_area = None
@@ -29,6 +30,7 @@ class App(BaseApp):
     def initialize(self):
         self.is_running = True
         self.gpio = GPIOController()
+        self.speaker = SpeakerController()
         self._create_ui()
         self._lv_timer = lv.timer_create(self._timer_update, 300, None)
 
@@ -115,6 +117,46 @@ class App(BaseApp):
 
         self._update_input_labels()
 
+        # 扬声器测试区域
+        y_spk_start = y_in_start + 25 + len(INPUT_PINS) * 55 + 15
+
+        spk_label = lv.label(self.content_area)
+        spk_label.set_text("扬声器测试")
+        spk_label.set_style_text_color(lv.color_hex(0xE65100), 0)
+        spk_label.set_style_text_font(font, 0)
+        spk_label.set_pos(10, y_spk_start)
+
+        spk_row = lv.obj(self.content_area)
+        spk_row.set_size(self.disp_w - 30, 50)
+        spk_row.set_pos(5, y_spk_start + 25)
+        spk_row.set_style_bg_color(lv.color_hex(0xF5F5F5), 0)
+        spk_row.set_style_bg_opa(255, 0)
+        spk_row.set_style_border_width(0, 0)
+        spk_row.set_style_radius(10, 0)
+        spk_row.set_style_pad_all(0, 0)
+        spk_row.clear_flag(lv.obj.FLAG.CLICKABLE)
+        spk_row.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
+
+        spk_name_label = lv.label(spk_row)
+        spk_name_label.set_text("播放 siren.wav")
+        spk_name_label.set_style_text_color(lv.color_hex(0x333333), 0)
+        spk_name_label.set_style_text_font(font, 0)
+        spk_name_label.align(lv.ALIGN.LEFT_MID, 15, 0)
+
+        spk_btn = lv.btn(spk_row)
+        spk_btn.set_size(100, 36)
+        spk_btn.align(lv.ALIGN.RIGHT_MID, -10, 0)
+        spk_btn.set_style_radius(8, 0)
+        spk_btn.set_style_bg_color(lv.color_hex(0x2196F3), 0)
+        spk_btn.set_style_bg_grad_color(lv.color_hex(0x1976D2), 0)
+        spk_btn.set_style_bg_grad_dir(lv.GRAD_DIR.VER, 0)
+        spk_btn.set_style_text_font(font, 0)
+
+        spk_btn_label = lv.label(spk_btn)
+        spk_btn_label.set_text("播放")
+        spk_btn_label.center()
+        spk_btn.add_event(lambda e: self._on_play_speaker(), lv.EVENT.CLICKED, None)
+
     def _set_btn_style(self, btn, state):
         if state:
             btn.set_style_bg_color(lv.color_hex(0x4CAF50), 0)
@@ -149,6 +191,22 @@ class App(BaseApp):
                 label.set_text("低电平")
                 label.set_style_text_color(lv.color_hex(0xC62828), 0)
 
+    def _on_play_speaker(self):
+        _log("APP: _on_play_speaker called, speaker is None: " + str(self.speaker is None))
+        if self.speaker:
+            try:
+                result = self.speaker.play_wav("siren.wav")
+                _log("APP: play siren.wav: " + ("success" if result else "failed"))
+            except Exception as e:
+                _log("APP: play_wav exception: " + str(e))
+                import sys
+                try:
+                    sys.print_exception(e)
+                except:
+                    pass
+        else:
+            _log("APP: speaker is None, cannot play")
+
     def _timer_update(self, timer):
         try:
             self._update_input_labels()
@@ -163,6 +221,9 @@ class App(BaseApp):
             except:
                 pass
             self._lv_timer = None
+        if self.speaker:
+            self.speaker.stop()
+            self.speaker = None
         if self.gpio:
             self.gpio.reset_outputs()
             self.gpio = None

@@ -147,7 +147,7 @@ class AppManager:
         self.icon_spacing_x = 30
         self.icon_spacing_y = 40
         self.grid_start_x = 40
-        self.grid_start_y = 100
+        self.grid_start_y = 140
         self.icons_per_row = 4
         self.rows_per_page = 1
         self.apps_per_page = self.icons_per_row * self.rows_per_page
@@ -157,8 +157,27 @@ class AppManager:
             self.font_16 = lv.font_yb_cn_16
             self.home_screen = lv.obj()
             self.home_screen.set_size(self.home_screen_width, 480)
-            style = create_black_frosted_style()
-            self.home_screen.add_style(style, 0)
+
+            # 桌面背景壁纸
+            self.wallpaper = None
+            try:
+                with open("/sdcard/wallpaper.png", 'rb') as f:
+                    wp_data = f.read()
+                    wp_img_dsc = lv.img_dsc_t({
+                        'data_size': len(wp_data),
+                        'data': wp_data
+                    })
+                    self.wallpaper = lv.img(self.home_screen)
+                    self.wallpaper.set_src(wp_img_dsc)
+                    self.wallpaper.set_size(self.home_screen_width, 480)
+                    self.wallpaper.set_pos(0, 0)
+            except Exception as e:
+                debug_print("load wallpaper", e)
+
+            # 如果没有壁纸或加载失败，使用默认黑色背景
+            if self.wallpaper is None:
+                style = create_black_frosted_style()
+                self.home_screen.add_style(style, 0)
 
             self.app_container = lv.obj(self.home_screen)
             self.app_container.set_size(lv.pct(100), lv.pct(100))
@@ -169,24 +188,7 @@ class AppManager:
             self.app_container.clear_flag(lv.obj.FLAG.CLICKABLE)
             self.app_container.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
 
-            self.dock = lv.obj(self.home_screen)
-            self.dock.set_height(85)
-            self.dock.set_style_radius(20, 0)
-            self.dock.set_style_bg_color(lv.color_hex(0xFFFFFF), 0)
-            self.dock.set_style_bg_opa(50, 0)
-            self.dock.set_style_border_width(0, 0)
-            self.dock.set_style_shadow_width(15, 0)
-            self.dock.set_style_shadow_opa(30, 0)
-            self.dock.set_style_shadow_color(lv.color_hex(0x000000), 0)
-            self.dock.set_style_shadow_ofs_y(5, 0)
-            self.dock.set_flex_flow(lv.FLEX_FLOW.ROW)
-            self.dock.set_flex_align(lv.FLEX_ALIGN.CENTER, lv.FLEX_ALIGN.CENTER, lv.FLEX_ALIGN.CENTER)
-            self.dock.set_style_pad_column(15, 0)
-            self.dock.set_scrollbar_mode(lv.SCROLLBAR_MODE.OFF)
-            self.dock.set_scroll_dir(lv.DIR.NONE)
-            self.dock.set_pos(0, 480 - 100)
-            self.dock.set_width(self.home_screen_width)
-            self.dock.add_flag(lv.obj.FLAG.HIDDEN)
+            # Dock栏已移除
 
             self.scan_apps()
             log_print("scan_apps done, apps loaded:", len(self.apps))
@@ -216,7 +218,7 @@ class AppManager:
             except Exception as e:
                 debug_print("scan_app_dirs", e)
 
-            allowed_apps = ["taping_checker", "picture_get", "io_tester"]
+            allowed_apps = ["taping_checker", "picture_get", "io_tester", "body_pose"]
             app_dirs = [d for d in app_dirs if d in allowed_apps]
             log_print("filtered app_dirs:", app_dirs)
 
@@ -249,25 +251,7 @@ class AppManager:
                     sys.print_exception(e, buf)
                     log_print("load app", app_dir, "error:", buf.getvalue())
 
-            dock_app_names = ["胶带检测", "按键拍照"]
-            self.dock_apps = []
-            for app_name in dock_app_names:
-                if app_name in self.apps:
-                    self.dock_apps.append(self.apps[app_name])
-            for app in self.dock_apps:
-                self.create_dock_icon(app)
-
-            if len(self.dock_apps) > 0:
-                dock_icon_size = 60
-                dock_padding = 20
-                dock_spacing = 15
-                dock_width = (len(self.dock_apps) * dock_icon_size) + ((len(self.dock_apps) - 1) * dock_spacing) + (dock_padding * 2)
-                self.dock.set_width(dock_width)
-                self.dock.set_pos((self.home_screen_width - dock_width) // 2, 480 - 100)
-                self.dock.clear_flag(lv.obj.FLAG.HIDDEN)
-                log_print("dock visible, width=", dock_width)
-            else:
-                log_print("no dock apps found, dock hidden")
+            # Dock栏已移除，所有应用只显示在桌面网格中
 
         except Exception as e:
             debug_print("scan_apps", e)
@@ -280,6 +264,32 @@ class AppManager:
             self.create_app_icon(app)
         except Exception as e:
             debug_print("register_app", e)
+
+    def _load_icon(self, app, attr_name):
+        try:
+            if not hasattr(app, attr_name):
+                return None
+            data = getattr(app, attr_name)
+            if data is None:
+                return None
+            if isinstance(data, bytes):
+                return lv.img_dsc_t({
+                    'data_size': len(data),
+                    'data': data
+                })
+            return data
+        except Exception as e:
+            debug_print("_load_icon", e)
+            return None
+
+    def _set_icon_bg(self, icon, img_dsc, fallback_color=(0x5AC8FA, 0x2196F3)):
+        if img_dsc:
+            icon.set_style_bg_opa(0, 0)
+            icon.set_style_bg_img_src(img_dsc, 0)
+        else:
+            icon.set_style_bg_color(lv.color_hex(fallback_color[0]), 0)
+            icon.set_style_bg_grad_color(lv.color_hex(fallback_color[1]), 0)
+            icon.set_style_bg_grad_dir(lv.GRAD_DIR.VER, 0)
 
     def create_app_icon(self, app):
         try:
@@ -294,21 +304,18 @@ class AppManager:
             icon.set_pos(icon_x, icon_y)
             icon.set_style_radius(18, 0)
 
-            if hasattr(app, 'icon') and app.icon:
-                icon.set_style_bg_opa(0, 0)
-                icon.set_style_bg_img_src(app.icon, 0)
-            else:
-                ios_colors = [
-                    (0x5AC8FA, 0x2196F3),
-                    (0x4CD964, 0x43A047),
-                    (0xFF9500, 0xFB8C00),
-                    (0xFF3B30, 0xE53935),
-                    (0x5856D6, 0x3F51B5),
-                ]
-                color_index = app_index % len(ios_colors)
-                icon.set_style_bg_color(lv.color_hex(ios_colors[color_index][0]), 0)
-                icon.set_style_bg_grad_color(lv.color_hex(ios_colors[color_index][1]), 0)
-                icon.set_style_bg_grad_dir(lv.GRAD_DIR.VER, 0)
+            img_dsc = self._load_icon(app, 'icon_data')
+            if img_dsc is None:
+                img_dsc = self._load_icon(app, 'icon')
+            ios_colors = [
+                (0x5AC8FA, 0x2196F3),
+                (0x4CD964, 0x43A047),
+                (0xFF9500, 0xFB8C00),
+                (0xFF3B30, 0xE53935),
+                (0x5856D6, 0x3F51B5),
+            ]
+            color_index = app_index % len(ios_colors)
+            self._set_icon_bg(icon, img_dsc, ios_colors[color_index])
 
             icon.set_style_shadow_width(3, 0)
             icon.set_style_shadow_opa(80, 0)
@@ -319,40 +326,13 @@ class AppManager:
 
             label = lv.label(self.app_container)
             label.set_text(app.name)
-            label.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
+            label.set_style_text_color(lv.color_hex(0x000000), 0)
             label.set_style_text_font(self.font_16, 0)
             label.set_width(self.icon_size)
             label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
             label.set_pos(icon_x, icon_y + self.icon_size + 7)
         except Exception as e:
             debug_print("create_app_icon", e)
-
-    def create_dock_icon(self, app):
-        try:
-            icon = lv.btn(self.dock)
-            icon.set_size(60, 60)
-            icon.set_style_radius(15, 0)
-
-            if hasattr(app, 'dock_icon') and app.dock_icon:
-                icon.set_style_bg_color(lv.color_hex(0xFFFFFF), 0)
-                icon.set_style_bg_opa(0, 0)
-                icon.set_style_bg_img_src(app.dock_icon, 0)
-            elif hasattr(app, 'icon') and app.icon:
-                icon.set_style_bg_color(lv.color_hex(0xFFFFFF), 0)
-                icon.set_style_bg_opa(0, 0)
-                icon.set_style_bg_img_src(app.icon, 0)
-            else:
-                icon.set_style_bg_color(lv.color_hex(0x5AC8FA), 0)
-                icon.set_style_bg_grad_color(lv.color_hex(0x2196F3), 0)
-                icon.set_style_bg_grad_dir(lv.GRAD_DIR.VER, 0)
-
-            icon.set_style_shadow_width(3, 0)
-            icon.set_style_shadow_opa(80, 0)
-            icon.set_style_shadow_ofs_y(2, 0)
-            icon.set_style_shadow_color(lv.color_hex(0x000000), 0)
-            icon.add_event(lambda e: self.launch_dock_app(app.name), lv.EVENT.CLICKED, None)
-        except Exception as e:
-            debug_print("create_dock_icon", e)
 
     def launch_app(self, app_name):
         try:
@@ -361,14 +341,6 @@ class AppManager:
                 self.current_app.on_icon_clicked()
         except Exception as e:
             debug_print("launch_app", e)
-
-    def launch_dock_app(self, app_name):
-        try:
-            if app_name in self.apps:
-                self.current_app = self.apps[app_name]
-                self.current_app.launch()
-        except Exception as e:
-            debug_print("launch_dock_app", e)
 
     def go_home(self):
         try:

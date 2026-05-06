@@ -38,7 +38,7 @@ class App(BaseApp):
             with open("/sdcard/apps/picture_get/icon.png", 'rb') as f:
                 img_data = f.read()
                 icon_img = lv.img_dsc_t({
-                    'data-size': len(img_data),
+                    'data_size': len(img_data),
                     'data': img_data
                 })
         except:
@@ -47,7 +47,7 @@ class App(BaseApp):
             with open("/sdcard/apps/picture_get/dock_icon.png", 'rb') as f:
                 dock_data = f.read()
                 self.dock_icon = lv.img_dsc_t({
-                    'data-size': len(dock_data),
+                    'data_size': len(dock_data),
                     'data': dock_data
                 })
         except:
@@ -77,9 +77,9 @@ class App(BaseApp):
         self.is_running = True
         boot_seq = _load_boot_seq()
         self.run_dir = "DIR%06d" % boot_seq
-        ensure_dir(SAVE_BASE + self.run_dir + "/")
+        # 注意：不在启动时创建文件夹，延迟到拍照时创建
         _save_boot_seq(boot_seq + 1)
-        self.seq_num = _load_seq(self.run_dir)
+        self.seq_num = 1  # 初始序号，拍照时再从文件加载或创建
 
         if machine:
             try:
@@ -199,6 +199,9 @@ class App(BaseApp):
     def _do_capture(self, now):
         fname = None
         try:
+            # 首次拍照时加载序号，并创建文件夹
+            if self.seq_num == 1:
+                self.seq_num = _load_seq(self.run_dir)
             img = self.pl.sensor.snapshot(chn=CAM_CHN_ID_1)
             path, fname = save_photo(img, self.run_dir, self.seq_num)
             if path:
