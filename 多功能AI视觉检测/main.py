@@ -218,7 +218,7 @@ class AppManager:
             except Exception as e:
                 debug_print("scan_app_dirs", e)
 
-            allowed_apps = ["taping_checker", "picture_get", "io_tester", "body_pose"]
+            allowed_apps = ["taping_checker", "picture_get", "io_tester", "body_pose", "yolov8n_seg"]
             app_dirs = [d for d in app_dirs if d in allowed_apps]
             log_print("filtered app_dirs:", app_dirs)
 
