@@ -240,7 +240,8 @@ class App(BaseApp):
     def _draw_title_bar(self, ui_img, title="胶带检测"):
         ui_img.draw_rectangle(0, 0, 640, 50, color=LAYOUT['title_bg'], thickness=1, fill=True)
         ui_img.draw_line(0, 49, 640, 49, color=LAYOUT['title_line'], thickness=1)
-        ui_img.draw_string_advanced(12, 14, 24, "<", color=LAYOUT['text_white'])
+        ui_img.draw_line(30, 14, 14, 25, color=LAYOUT['text_white'], thickness=4)
+        ui_img.draw_line(14, 25, 30, 36, color=LAYOUT['text_white'], thickness=4)
         ui_img.draw_string_advanced(260, 16, 16, title, color=LAYOUT['text_white'])
         if not self.panel:
             ui_img.draw_rectangle(555, 5, 80, 40, color=LAYOUT['primary_dark'], thickness=1, fill=True)
@@ -882,8 +883,8 @@ class App(BaseApp):
                     boxes = self.detector.run(img)
                     bbox_colors = self.cfg_mgr.get("bbox_colors", None)
                     self._ui_img.clear()
-                    self._draw_title_bar(self._ui_img)
                     self.detector.draw_result(self._ui_img, boxes, bbox_colors)
+                    self._draw_title_bar(self._ui_img)
                     self._update_alarm(boxes)
                     self._update_io34()
                     self._draw_status_overlay()

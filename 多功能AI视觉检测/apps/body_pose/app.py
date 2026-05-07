@@ -162,9 +162,8 @@ class App(BaseApp):
         ui_img.draw_rectangle(0, 0, 640, 50, color=LAYOUT['title_bg'], thickness=1, fill=True)
         ui_img.draw_line(0, 49, 640, 49, color=LAYOUT['title_line'], thickness=1)
         # 返回按钮 - 箭头样式
-        ui_img.draw_line(20, 25, 45, 10, color=LAYOUT['text_white'], thickness=3)
-        ui_img.draw_line(20, 25, 45, 40, color=LAYOUT['text_white'], thickness=3)
-        ui_img.draw_line(20, 25, 70, 25, color=LAYOUT['text_white'], thickness=3)
+        ui_img.draw_line(30, 14, 14, 25, color=LAYOUT['text_white'], thickness=4)
+        ui_img.draw_line(14, 25, 30, 36, color=LAYOUT['text_white'], thickness=4)
         # 标题
         title_x = 260
         if len(title) > 6:

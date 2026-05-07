@@ -64,6 +64,8 @@ class App(BaseApp):
         self.io34 = None
         self.io34_last_stable = 1
         self.io34_since_ms = 0
+        self._touch_last_ms = 0
+        self._touch_debounce_ms = 200
 
     def launch(self):
         self.screen = lv.obj()
@@ -105,11 +107,12 @@ class App(BaseApp):
     def _draw_ui_overlay(self, ui_img, status_text="", status_is_red=False):
         ui_img.clear()
 
-        ui_img.draw_rectangle(0, 0, 640, 60, color=(17, 7, 4), thickness=1, fill=True)
-        ui_img.draw_line(0, 59, 640, 59, color=(200, 200, 200), thickness=1)
+        ui_img.draw_rectangle(0, 0, 640, 50, color=(20, 25, 40), thickness=1, fill=True)
+        ui_img.draw_line(0, 49, 640, 49, color=(60, 70, 90), thickness=1)
 
-        ui_img.draw_string_advanced(12, 18, 24, "<", color=(255, 255, 255))
-        ui_img.draw_string_advanced(260, 18, 16, "按键拍照", color=(255, 255, 255))
+        ui_img.draw_line(30, 14, 14, 25, color=(255, 255, 255), thickness=4)
+        ui_img.draw_line(14, 25, 30, 36, color=(255, 255, 255), thickness=4)
+        ui_img.draw_string_advanced(260, 16, 16, "按键拍照", color=(255, 255, 255))
 
         ui_img.draw_rectangle(10, 70, 620, 30, color=(245, 245, 245), thickness=1, fill=True)
         ui_img.draw_string_advanced(20, 76, 16, "目录: %s  |  IO34低电平触发" % self.run_dir, color=(51, 51, 51))
@@ -148,17 +151,19 @@ class App(BaseApp):
                     if len(point):
                         pt = point[0]
                         if pt.event == TOUCH.EVENT_DOWN:
-                            if pt.x < 100 and pt.y < 60:
-                                self.is_running = False
-                                break
-                            elif (pt.x - 580) ** 2 + (pt.y - 270) ** 2 <= 40 ** 2:
-                                now = time.ticks_ms()
-                                if time.ticks_diff(now, self.last_trigger_ms) >= self.min_interval_ms:
-                                    fname = self._do_capture(now)
-                                    status_text = "拍照成功 %s" % fname if fname else "拍照失败"
-                                    status_until_ms = time.ticks_add(now, 3000)
-                                    self._draw_ui_overlay(ui_img, status_text, status_is_red=True)
-                                    Display.show_image(ui_img, 0, 0, Display.LAYER_OSD0)
+                            now_ms = time.ticks_ms()
+                            if time.ticks_diff(now_ms, self._touch_last_ms) >= self._touch_debounce_ms:
+                                self._touch_last_ms = now_ms
+                                if pt.x < 100 and pt.y < 50:
+                                    self.is_running = False
+                                    break
+                                elif (pt.x - 580) ** 2 + (pt.y - 270) ** 2 <= 40 ** 2:
+                                    if time.ticks_diff(now_ms, self.last_trigger_ms) >= self.min_interval_ms:
+                                        fname = self._do_capture(now_ms)
+                                        status_text = "拍照成功 %s" % fname if fname else "拍照失败"
+                                        status_until_ms = time.ticks_add(now_ms, 3000)
+                                        self._draw_ui_overlay(ui_img, status_text, status_is_red=True)
+                                        Display.show_image(ui_img, 0, 0, Display.LAYER_OSD0)
 
                 if self.io34 is not None:
                     now = time.ticks_ms()
